@@ -22,6 +22,6 @@ conda activate owl
 export OMP_NUM_THREADS=12
 # Change to the working directory
 cd /owl-wms/owl-vaes
-torchrun --nproc_per_node=2 -m train --config_path configs/t3/tekken_H200_optimized.yml
+torchrun --nproc_per_node=8 -m train --config_path configs/t3/tekken_H200_optimized.yml
 # Run the pipeline - each task will process a subset of videos
 

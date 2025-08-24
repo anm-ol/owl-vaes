@@ -1,51 +1,10 @@
-# In owl-vaes/owl_vaes/data/t3_live_merge_loader.py
 import numpy as np
 import torch
 import torch.nn.functional as F
 import os
 import random
-from torch.utils.data import DataLoader, IterableDataset, get_worker_info, DistributedSampler
-
-
-def interpolate_missing_poses(all_poses):
-    """Fills in None values in a list of pose arrays using linear interpolation."""
-    filled_poses = [p.copy() if p is not None else None for p in all_poses]
-    
-    # Find all indices of valid poses
-    valid_indices = [i for i, p in enumerate(filled_poses) if p is not None]
-    
-    if not valid_indices: # Handle case where there are no poses at all
-        num_keypoints = 17 # Default to COCO keypoint count
-        keypoint_dims = 3 # x, y, score
-        return [np.zeros((num_keypoints, keypoint_dims)) for _ in range(len(filled_poses))]
-
-    # Fill leading None values with the first valid pose
-    first_valid_idx = valid_indices[0]
-    if first_valid_idx > 0:
-        for i in range(first_valid_idx):
-            filled_poses[i] = filled_poses[first_valid_idx]
-
-    # Fill trailing None values with the last valid pose
-    last_valid_idx = valid_indices[-1]
-    if last_valid_idx < len(filled_poses) - 1:
-        for i in range(last_valid_idx + 1, len(filled_poses)):
-            filled_poses[i] = filled_poses[last_valid_idx]
-
-    # Interpolate gaps between valid poses
-    for i in range(len(valid_indices) - 1):
-        start_idx = valid_indices[i]
-        end_idx = valid_indices[i+1]
-        gap_length = end_idx - start_idx
-        
-        if gap_length > 1:
-            start_pose = filled_poses[start_idx]
-            end_pose = filled_poses[end_idx]
-            for j in range(1, gap_length):
-                alpha = j / gap_length
-                interpolated_pose = start_pose * (1 - alpha) + end_pose * alpha
-                filled_poses[start_idx + j] = interpolated_pose
-                
-    return filled_poses
+from torch.utils.data import DataLoader, IterableDataset, get_worker_info
+import torchvision.transforms.functional as TF
 
 class T3LiveMergeDataset(IterableDataset):
     def __init__(self, root="t3_data/", pose_root="t3_pose/", pose_suffix="_two_player_poses.npz", target_size=(256, 256)):
@@ -55,73 +14,112 @@ class T3LiveMergeDataset(IterableDataset):
         self.pose_suffix = pose_suffix
         self.target_size = tuple(target_size)
         
-        self.original_files = sorted([os.path.join(root, f) for f in os.listdir(root) if f.endswith(".npz")])
-        if not self.original_files:
-            raise FileNotFoundError(f"No .npz files found in the directory: {root}")
+        # This will store tuples of (path_to_original_npz, path_to_pose_npz, frame_index)
+        self.valid_frame_pointers = []
+        
+        print("Indexing valid frames using 'attention_mask'...")
+        if os.path.isdir(self.root):
+            npz_files = [f for f in os.listdir(self.root) if f.endswith(".npz")]
+            for npz_file in npz_files:
+                original_path = os.path.join(self.root, npz_file)
+                pose_path = os.path.join(self.pose_root, npz_file.replace('.npz', self.pose_suffix))
+                
+                if not os.path.exists(pose_path):
+                    continue
+                
+                try:
+                    # Load just the attention mask to find the valid range
+                    with np.load(original_path, mmap_mode='r') as data:
+                        mask = data['valid_frames']
+                        # Find the index of the last valid frame
+                        last_valid_idx = int(np.where(mask == 1)[0][-1])
+                    
+                    # Create pointers for all frames up to the last valid one
+                    for idx in range(last_valid_idx + 1):
+                        self.valid_frame_pointers.append((original_path, pose_path, idx))
+                
+                except Exception as e:
+                    print(f"Warning: Could not index file {npz_file}. Error: {e}")
+                    continue
+        
+        if not self.valid_frame_pointers:
+            raise FileNotFoundError("No valid frames found in the dataset directories.")
+            
+        print(f"Found {len(self.valid_frame_pointers)} total valid frame pointers.")
 
     def __iter__(self):
+        # Step 1: Divide the list of pointers among workers
         worker_info = get_worker_info()
-        files_to_process = self.original_files
         if worker_info is not None:
-            files_to_process = self.original_files[worker_info.id::worker_info.num_workers]
+            worker_id = worker_info.id
+            num_workers = worker_info.num_workers
+            all_pointers = self.valid_frame_pointers
+            start = worker_id * len(all_pointers) // num_workers
+            end = (worker_id + 1) * len(all_pointers) // num_workers
+            worker_pointers = all_pointers[start:end]
+        else:
+            worker_pointers = self.valid_frame_pointers
+        
+        # Step 2: Group pointers by file path to reduce file I/O
+        # This will store {path: [frame_idx1, frame_idx2, ...]}
+        grouped_pointers = {}
+        for orig_path, pose_path, frame_idx in worker_pointers:
+            if orig_path not in grouped_pointers:
+                grouped_pointers[orig_path] = {'pose_path': pose_path, 'indices': []}
+            grouped_pointers[orig_path]['indices'].append(frame_idx)
 
-        while True:
-            original_path = random.choice(files_to_process)
-            base_name = os.path.basename(original_path)
-            pose_path = os.path.join(self.pose_root, base_name.replace('.npz', self.pose_suffix))
-
-            if not os.path.exists(pose_path):
-                continue
-
+        # Shuffle the files to maintain randomness
+        file_paths = list(grouped_pointers.keys())
+        random.shuffle(file_paths)
+        
+        # Step 3: Iterate through files, open once, and process all frames
+        for orig_path in file_paths:
+            pose_path = grouped_pointers[orig_path]['pose_path']
+            indices = grouped_pointers[orig_path]['indices']
+            
             try:
-                original_data = np.load(original_path)
-                pose_data = np.load(pose_path)
-
-                original_images = original_data['images']
-                pose_images_raw = pose_data['pose_images']
-
-                # Create a list of poses, using None for blank frames
-                all_poses = []
-                for pose_frame in pose_images_raw:
-                    if np.any(pose_frame): # Check if the frame is not all black
-                        all_poses.append(pose_frame)
-                    else:
-                        all_poses.append(None)
-                
-                # Interpolate the missing poses
-                interpolated_poses = interpolate_missing_poses(all_poses)
-                
-                min_frames = min(original_images.shape[0], len(interpolated_poses))
-                if min_frames == 0:
-                    continue
-
-                for i in range(min_frames):
-                    orig_frame = torch.from_numpy(original_images[i]).float()
-                    pose_frame = torch.from_numpy(interpolated_poses[i]).float()
-
-                    # Ensure pose is single channel
-                    if pose_frame.shape[0] == 3:
-                        pose_frame = torch.max(pose_frame, dim=0, keepdim=True)[0]
-
-                    combined_frame = torch.cat([orig_frame, pose_frame], dim=0)
-                    resized_frame = F.interpolate(combined_frame.unsqueeze(0), size=self.target_size, mode='bilinear', align_corners=False).squeeze(0)
+                # Open the files once per file
+                with np.load(orig_path, mmap_mode='r') as original_data, \
+                     np.load(pose_path, mmap_mode='r') as pose_data:
                     
-                    yield resized_frame
+                    images = original_data['images']
+                    pose_images = pose_data['pose_images']
+
+                    # Iterate through the frames for this specific file
+                    for frame_idx in indices:
+                        orig_frame = torch.from_numpy(images[frame_idx]).float()
+                        pose_frame_raw = pose_images[frame_idx]
+                        pose_frame = torch.from_numpy(pose_frame_raw).float()
+                        
+                        if pose_frame.ndim == 3 and pose_frame.shape[0] == 3:
+                            pose_frame = torch.max(pose_frame, dim=0, keepdim=True)[0]
+
+                        pose_frame = TF.gaussian_blur(pose_frame.unsqueeze(0), kernel_size=3).squeeze(0)
+                        
+                        combined_frame = torch.cat([orig_frame, pose_frame], dim=0)
+                        resized_frame = F.interpolate(combined_frame.unsqueeze(0), size=self.target_size, mode='bilinear', align_corners=False).squeeze(0)
+                        
+                        yield resized_frame
 
             except Exception as e:
-                print(f"Warning: Could not process file {original_path}. Error: {e}")
+                print(f"Warning: Skipping file {os.path.basename(orig_path)}. Error: {e}")
                 continue
 
 def collate_fn(frames):
     batch = torch.stack(frames)
-    batch = (batch / 255.0) * 2.0 - 1.0
+    
+    # Robust normalization: check if data is [0, 255] or [0, 1]
+    if batch.max() > 1.0:
+        batch = batch / 255.0
+    
+    # Scale from [0, 1] to [-1, 1]
+    batch = batch * 2.0 - 1.0
     return batch
 
 def get_loader(batch_size, **data_kwargs):
     dataset = T3LiveMergeDataset(**data_kwargs)
     
-    # IterableDatasets don't work well with standard samplers. We rely on the worker splitting logic.
-    num_workers = min(os.cpu_count(), 8) 
+    num_workers = min(os.cpu_count(), 8)
     loader = DataLoader(
         dataset,
         batch_size=batch_size,

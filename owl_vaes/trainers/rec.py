@@ -22,6 +22,7 @@ from ..losses.basic import latent_reg_loss
 from ..losses.dwt import dwt_loss_fn
 
 from ..nn.crt import CRT
+from tqdm import tqdm
 
 class RecTrainer(BaseTrainer):
     """
@@ -99,6 +100,8 @@ class RecTrainer(BaseTrainer):
         l1_weight = self.train_cfg.loss_weights.get('l1', 0.0)
         l2_weight = self.train_cfg.loss_weights.get('l2', 0.0)
         crt_weight = self.train_cfg.loss_weights.get('crt', 0.0)
+        l2_weight = self.train_cfg.loss_weights.get('l2', 0.0)
+        l1_pose_weight = self.train_cfg.loss_weights.get('l1_pose', 0.0)
 
         def warmup_crt_weight():
             if self.total_step_counter >= 1000:
@@ -158,16 +161,29 @@ class RecTrainer(BaseTrainer):
 
         # Dataset setup
         loader = get_loader(self.train_cfg.data_id, self.train_cfg.batch_size, **self.train_cfg.data_kwargs)
-
+        # Calculate the steps per epoch. We'll use the number of original files as a proxy.
+        try:
+            total_files = len(loader.dataset.original_files)
+            steps_per_epoch = total_files // self.train_cfg.batch_size
+        except AttributeError:
+            # Fallback if the dataset doesn't have original_files, or to just show progress.
+            steps_per_epoch = None
         local_step = 0
-        for _ in range(self.train_cfg.epochs):
-            for batch in loader:
+        for epoch_idx in range(self.train_cfg.epochs):
+            # Pass the calculated steps_per_epoch to the `total` argument.
+            for batch in tqdm(loader, desc=f"Epoch {epoch_idx + 1}", total=steps_per_epoch, disable=self.rank != 0):
                 total_loss = 0.
                 batch = batch.to(self.device).bfloat16()
                 with ctx:
                     batch_rec, mu, logvar = self.model(batch)
                     z = mu # For logging
+                    # Split the ground truth data
+                    zrgb_real = batch[:, :3]
+                    pose_real = batch[:, 3:4]
 
+                      # Split the reconstructed data
+                    rgb_rec = batch_rec[:, :3]
+                    pose_rec = batch_rec[:, 3:4]
                     if self.crt is not None:
                         # z is [b,c,h,w], we want [b,hw,c]
                         z_flat = eo.rearrange(z, 'b c h w -> b (h w) c')
@@ -178,7 +194,7 @@ class RecTrainer(BaseTrainer):
                         crt_loss = self.crt(z_flat) / accum_steps
                         metrics.log('crt_loss', crt_loss)
                         total_loss += warmup_crt_weight() * crt_loss
- 
+
                     if kl_weight > 0.0:
                         reg_loss = latent_reg_loss(mu, logvar) / accum_steps
                         total_loss += reg_loss * kl_weight
@@ -200,6 +216,12 @@ class RecTrainer(BaseTrainer):
                         total_loss += dwt_loss * dwt_weight
                         metrics.log('dwt_loss', dwt_loss)
 
+                    # 2. Pose Reconstruction Loss (using L1 for accuracy)
+                    if l1_pose_weight > 0.0:
+                        l1_pose_loss = F.l1_loss(pose_rec, pose_real) / accum_steps
+                        total_loss += l1_pose_loss * l1_pose_weight
+                        metrics.log('l1_pose_loss', l1_pose_loss)
+                    
                     if lpips_weight > 0.0:
                         lpips_loss = lpips(batch_rec[:,:3], batch[:,:3]) / accum_steps
                         total_loss += lpips_loss

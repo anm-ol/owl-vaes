@@ -116,16 +116,20 @@ def collate_fn(frames):
     batch = batch * 2.0 - 1.0
     return batch
 
+# In the get_loader function
 def get_loader(batch_size, **data_kwargs):
     dataset = T3LiveMergeDataset(**data_kwargs)
     
-    num_workers = min(os.cpu_count(), 8)
+    # Use more workers to match the 12 CPUs you allocated per task in your job script.
+    num_workers = 12 
     loader = DataLoader(
         dataset,
         batch_size=batch_size,
         collate_fn=collate_fn,
         num_workers=num_workers,
-        pin_memory=True
+        pin_memory=True,
+        # This can sometimes help with worker initialization speed
+        persistent_workers=True 
     )
     return loader
 # ----------------- Main Execution Block (for direct testing) -----------------

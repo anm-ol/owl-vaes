@@ -7,7 +7,7 @@ def infer_config_from_checkpoint(ckpt_path):
     """Infer model config parameters from a checkpoint file"""
     
     # Load checkpoint
-    d = torch.load(ckpt_path, map_location='cpu')
+    d = torch.load(ckpt_path, map_location='cpu', weights_only=False)
     
     # Handle EMA and DDP prefixes
     prefix = ""

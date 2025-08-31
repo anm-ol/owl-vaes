@@ -2,7 +2,9 @@ import torch.distributed as dist
 import wandb
 import torch
 from torch import Tensor
-
+import matplotlib.pyplot as plt 
+# This is the missing import. The alias 'cm' is conventional.
+import matplotlib.cm as cm #
 import numpy as np
 
 class LogHelper:
@@ -113,6 +115,41 @@ def to_wandb_flow(x1, x2, gather = False):
     x = (x.detach().float().cpu() + 1) * 127.5 # [-1,1] -> [0,255]
     x = x.permute(0,2,3,1).numpy().astype(np.uint8) # [b,c,h,w] -> [b,h,w,c]
     return [wandb.Image(img) for img in x]
+
+#latent heatmaps
+
+def to_wandb_latent_heatmaps(latent_tensor, num_samples=1, num_channels=2):
+    """
+    Converts a latent space tensor into a dictionary of separate W&B Images,
+    one for each sample. Each image is a horizontal strip of its channels.
+    """
+    latent_tensor = latent_tensor.detach().cpu().float()
+    
+    num_samples = min(latent_tensor.shape[0], num_samples)
+    num_channels = min(latent_tensor.shape[1], num_channels)
+    
+    colormap = cm.get_cmap('viridis')
+    
+    # This will store the final wandb.Image objects
+    output_dict = {}
+
+    for i in range(num_samples):
+        channel_heatmaps = []
+        for j in range(num_channels):
+            channel = latent_tensor[i, j]
+            channel = (channel - channel.min()) / (channel.max() - channel.min() + 1e-6)
+            heatmap_rgba = colormap(channel.numpy())
+            heatmap_rgb = (heatmap_rgba[:, :, :3] * 255).astype(np.uint8)
+            channel_heatmaps.append(heatmap_rgb)
+        
+        # Combine the channels for this one sample into a horizontal strip
+        sample_grid = np.concatenate(channel_heatmaps, axis=1)
+
+        # Create a unique key for each sample's heatmap image
+        key = f"latent_heatmaps_sample_{i}"
+        output_dict[key] = wandb.Image(sample_grid, caption=f"Latent Channels for Sample {i}")
+    
+    return output_dict
 
 # ==== AUDIO ====
 

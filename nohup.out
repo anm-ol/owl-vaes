@@ -1,0 +1,155 @@
+W0828 07:48:35.465000 402936 site-packages/torch/distributed/run.py:774] 
+W0828 07:48:35.465000 402936 site-packages/torch/distributed/run.py:774] *****************************************
+W0828 07:48:35.465000 402936 site-packages/torch/distributed/run.py:774] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0828 07:48:35.465000 402936 site-packages/torch/distributed/run.py:774] *****************************************
+Warning: Failed to import Flash Cosine Attn. It's only needed for HDiT so you can ignore if not needed.
+Warning: Failed to import Flash Cosine Attn. It's only needed for HDiT so you can ignore if not needed.
+Warning: Failed to import Flash Cosine Attn. It's only needed for HDiT so you can ignore if not needed.
+Warning: Failed to import Flash Cosine Attn. It's only needed for HDiT so you can ignore if not needed.
+Warning: Failed to import Flash Cosine Attn. It's only needed for HDiT so you can ignore if not needed.
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "<frozen runpy>", line 198, in _run_module_as_main
+[rank0]:   File "<frozen runpy>", line 88, in _run_code
+[rank0]:   File "/home/sky/pranay_backup/train.py", line 29, in <module>
+[rank0]:     trainer = get_trainer_cls(cfg.train.trainer_id)(
+[rank0]:               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/home/sky/pranay_backup/owl_vaes/trainers/rec.py", line 40, in __init__
+[rank0]:     super().__init__(*args,**kwargs)
+[rank0]:   File "/home/sky/pranay_backup/owl_vaes/trainers/base.py", line 33, in __init__
+[rank0]:     wandb.init(
+[rank0]:   File "/home/sky/miniconda3/envs/owl/lib/python3.12/site-packages/wandb/sdk/wandb_init.py", line 1595, in init
+[rank0]:     wandb._sentry.reraise(e)
+[rank0]:   File "/home/sky/miniconda3/envs/owl/lib/python3.12/site-packages/wandb/analytics/sentry.py", line 162, in reraise
+[rank0]:     raise exc.with_traceback(sys.exc_info()[2])
+[rank0]:   File "/home/sky/miniconda3/envs/owl/lib/python3.12/site-packages/wandb/sdk/wandb_init.py", line 1523, in init
+[rank0]:     wi.maybe_login(init_settings)
+[rank0]:   File "/home/sky/miniconda3/envs/owl/lib/python3.12/site-packages/wandb/sdk/wandb_init.py", line 191, in maybe_login
+[rank0]:     wandb_login._login(
+[rank0]:   File "/home/sky/miniconda3/envs/owl/lib/python3.12/site-packages/wandb/sdk/wandb_login.py", line 318, in _login
+[rank0]:     key, key_status = wlogin.prompt_api_key(referrer=referrer)
+[rank0]:                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/home/sky/miniconda3/envs/owl/lib/python3.12/site-packages/wandb/sdk/wandb_login.py", line 244, in prompt_api_key
+[rank0]:     raise UsageError("api_key not configured (no-tty). call " + directive)
+[rank0]: wandb.errors.errors.UsageError: api_key not configured (no-tty). call wandb.login(key=[your_api_key])
+Warning: Failed to import Flash Cosine Attn. It's only needed for HDiT so you can ignore if not needed.Warning: Failed to import Flash Cosine Attn. It's only needed for HDiT so you can ignore if not needed.
+
+Warning: Failed to import Flash Cosine Attn. It's only needed for HDiT so you can ignore if not needed.
+[rank0]:[W828 07:48:56.187405771 ProcessGroupNCCL.cpp:1538] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+W0828 07:48:57.241000 402936 site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 403006 closing signal SIGTERM
+W0828 07:48:57.243000 402936 site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 403007 closing signal SIGTERM
+W0828 07:48:57.244000 402936 site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 403008 closing signal SIGTERM
+W0828 07:48:57.246000 402936 site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 403009 closing signal SIGTERM
+W0828 07:48:57.247000 402936 site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 403010 closing signal SIGTERM
+W0828 07:48:57.249000 402936 site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 403011 closing signal SIGTERM
+W0828 07:48:57.250000 402936 site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 403012 closing signal SIGTERM
+E0828 07:48:58.596000 402936 site-packages/torch/distributed/elastic/multiprocessing/api.py:874] failed (exitcode: 1) local_rank: 0 (pid: 403005) of binary: /home/sky/miniconda3/envs/owl/bin/python3.12
+Traceback (most recent call last):
+  File "/home/sky/miniconda3/envs/owl/bin/torchrun", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/sky/miniconda3/envs/owl/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 357, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/sky/miniconda3/envs/owl/lib/python3.12/site-packages/torch/distributed/run.py", line 901, in main
+    run(args)
+  File "/home/sky/miniconda3/envs/owl/lib/python3.12/site-packages/torch/distributed/run.py", line 892, in run
+    elastic_launch(
+  File "/home/sky/miniconda3/envs/owl/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 143, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sky/miniconda3/envs/owl/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 277, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+train FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2025-08-28_07:48:57
+  host      : sky-d185-pranay-79af0d6a-head
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 403005)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================
+Warning: Failed to import Flash Cosine Attn. It's only needed for HDiT so you can ignore if not needed.
+Warning: Failed to import Flash Cosine Attn. It's only needed for HDiT so you can ignore if not needed.
+Warning: Failed to import Flash Cosine Attn. It's only needed for HDiT so you can ignore if not needed.
+Warning: Failed to import Flash Cosine Attn. It's only needed for HDiT so you can ignore if not needed.
+Warning: Failed to import Flash Cosine Attn. It's only needed for HDiT so you can ignore if not needed.
+Warning: Failed to import Flash Cosine Attn. It's only needed for HDiT so you can ignore if not needed.
+Warning: Failed to import Flash Cosine Attn. It's only needed for HDiT so you can ignore if not needed.
+Warning: Failed to import Flash Cosine Attn. It's only needed for HDiT so you can ignore if not needed.
+wandb: Currently logged in as: pranay23 (d-fusion) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: creating run
+wandb: Tracking run with wandb version 0.21.1
+wandb: Run data is saved locally in /home/sky/pranay_backup/wandb/run-20250828_075039-1c48bc53
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run tekken_vae_H200_v6
+wandb: ⭐️ View project at https://wandb.ai/d-fusion/t3VAE
+wandb: 🚀 View run at https://wandb.ai/d-fusion/t3VAE/runs/1c48bc53
+Total parameters: 341,178,628
+Indexing valid frames using 'attention_mask'...
+Found 243100 total valid frame pointers.
+Indexing valid frames using 'attention_mask'...
+Found 243100 total valid frame pointers.
+Indexing valid frames using 'attention_mask'...
+Indexing valid frames using 'attention_mask'...
+Found 243100 total valid frame pointers.
+Found 243100 total valid frame pointers.
+Epoch 1: 0it [00:00, ?it/s]Indexing valid frames using 'attention_mask'...
+Found 243100 total valid frame pointers.
+Indexing valid frames using 'attention_mask'...
+Indexing valid frames using 'attention_mask'...
+Indexing valid frames using 'attention_mask'...
+Found 243100 total valid frame pointers.
+Found 243100 total valid frame pointers.
+Found 243100 total valid frame pointers.
+[rank6]:[W828 07:51:08.836546171 reducer.cpp:1457] Warning: find_unused_parameters=True was specified in DDP constructor, but did not find any unused parameters in the forward pass. This flag results in an extra traversal of the autograd graph every iteration,  which can adversely affect performance. If your model indeed never has any unused parameters in the forward pass, consider turning this flag off. Note that this warning may be a false positive if your model has flow control causing later iterations to have unused parameters. (function operator())
+[rank2]:[W828 07:51:09.799633663 reducer.cpp:1457] Warning: find_unused_parameters=True was specified in DDP constructor, but did not find any unused parameters in the forward pass. This flag results in an extra traversal of the autograd graph every iteration,  which can adversely affect performance. If your model indeed never has any unused parameters in the forward pass, consider turning this flag off. Note that this warning may be a false positive if your model has flow control causing later iterations to have unused parameters. (function operator())
+[rank4]:[W828 07:51:09.171231147 reducer.cpp:1457] Warning: find_unused_parameters=True was specified in DDP constructor, but did not find any unused parameters in the forward pass. This flag results in an extra traversal of the autograd graph every iteration,  which can adversely affect performance. If your model indeed never has any unused parameters in the forward pass, consider turning this flag off. Note that this warning may be a false positive if your model has flow control causing later iterations to have unused parameters. (function operator())
+[rank0]:[W828 07:51:09.357737033 reducer.cpp:1457] Warning: find_unused_parameters=True was specified in DDP constructor, but did not find any unused parameters in the forward pass. This flag results in an extra traversal of the autograd graph every iteration,  which can adversely affect performance. If your model indeed never has any unused parameters in the forward pass, consider turning this flag off. Note that this warning may be a false positive if your model has flow control causing later iterations to have unused parameters. (function operator())
+[rank7]:[W828 07:51:10.553510350 reducer.cpp:1457] Warning: find_unused_parameters=True was specified in DDP constructor, but did not find any unused parameters in the forward pass. This flag results in an extra traversal of the autograd graph every iteration,  which can adversely affect performance. If your model indeed never has any unused parameters in the forward pass, consider turning this flag off. Note that this warning may be a false positive if your model has flow control causing later iterations to have unused parameters. (function operator())
+[rank1]:[W828 07:51:10.616828112 reducer.cpp:1457] Warning: find_unused_parameters=True was specified in DDP constructor, but did not find any unused parameters in the forward pass. This flag results in an extra traversal of the autograd graph every iteration,  which can adversely affect performance. If your model indeed never has any unused parameters in the forward pass, consider turning this flag off. Note that this warning may be a false positive if your model has flow control causing later iterations to have unused parameters. (function operator())
+[rank3]:[W828 07:51:10.695686745 reducer.cpp:1457] Warning: find_unused_parameters=True was specified in DDP constructor, but did not find any unused parameters in the forward pass. This flag results in an extra traversal of the autograd graph every iteration,  which can adversely affect performance. If your model indeed never has any unused parameters in the forward pass, consider turning this flag off. Note that this warning may be a false positive if your model has flow control causing later iterations to have unused parameters. (function operator())
+[rank5]:[W828 07:51:10.186764366 reducer.cpp:1457] Warning: find_unused_parameters=True was specified in DDP constructor, but did not find any unused parameters in the forward pass. This flag results in an extra traversal of the autograd graph every iteration,  which can adversely affect performance. If your model indeed never has any unused parameters in the forward pass, consider turning this flag off. Note that this warning may be a false positive if your model has flow control causing later iterations to have unused parameters. (function operator())
+Epoch 1: 1it [00:21, 21.44s/it]Epoch 1: 2it [00:25, 11.45s/it]Epoch 1: 3it [00:29,  7.99s/it]Epoch 1: 4it [00:33,  6.37s/it]Epoch 1: 5it [00:37,  5.47s/it]Epoch 1: 6it [00:41,  4.93s/it]W0828 07:51:45.106000 404730 site-packages/torch/distributed/elastic/agent/server/api.py:723] Received 1 death signal, shutting down workers
+W0828 07:51:45.106000 404730 site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 404776 closing signal SIGHUP
+W0828 07:51:45.108000 404730 site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 404777 closing signal SIGHUP
+W0828 07:51:45.112000 404730 site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 404778 closing signal SIGHUP
+W0828 07:51:45.116000 404730 site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 404779 closing signal SIGHUP
+W0828 07:51:45.127000 404730 site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 404780 closing signal SIGHUP
+W0828 07:51:45.131000 404730 site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 404781 closing signal SIGHUP
+W0828 07:51:45.142000 404730 site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 404782 closing signal SIGHUP
+W0828 07:51:45.152000 404730 site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 404783 closing signal SIGHUP
+Traceback (most recent call last):
+  File "/home/sky/miniconda3/envs/owl/bin/torchrun", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/sky/miniconda3/envs/owl/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 357, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/sky/miniconda3/envs/owl/lib/python3.12/site-packages/torch/distributed/run.py", line 901, in main
+    run(args)
+  File "/home/sky/miniconda3/envs/owl/lib/python3.12/site-packages/torch/distributed/run.py", line 892, in run
+    elastic_launch(
+  File "/home/sky/miniconda3/envs/owl/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 143, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sky/miniconda3/envs/owl/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 268, in launch_agent
+    result = agent.run()
+             ^^^^^^^^^^^
+  File "/home/sky/miniconda3/envs/owl/lib/python3.12/site-packages/torch/distributed/elastic/metrics/api.py", line 138, in wrapper
+    result = f(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^
+  File "/home/sky/miniconda3/envs/owl/lib/python3.12/site-packages/torch/distributed/elastic/agent/server/api.py", line 715, in run
+    result = self._invoke_run(role)
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sky/miniconda3/envs/owl/lib/python3.12/site-packages/torch/distributed/elastic/agent/server/api.py", line 879, in _invoke_run
+    time.sleep(monitor_interval)
+  File "/home/sky/miniconda3/envs/owl/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/api.py", line 84, in _terminate_process_handler
+    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
+torch.distributed.elastic.multiprocessing.api.SignalException: Process 404730 got signal: 1

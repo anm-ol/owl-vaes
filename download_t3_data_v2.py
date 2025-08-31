@@ -3,16 +3,20 @@ from huggingface_hub import login, hf_hub_download
 import numpy as np
 import os
 
-# Authenticate with your token
-login(token="")
+# Authenticate with your token (set HF_TOKEN environment variable)
+token = os.getenv("HF_TOKEN")
+if token:
+    login(token=token)
+else:
+    print("Warning: HF_TOKEN environment variable not set. Some downloads may fail.")
 
-def download_t3_data_v2(save_dir="./t3_data"):
+def download_t3_data_v2(save_dir="./t3_data_v2"):
     from huggingface_hub import list_repo_files
     os.makedirs(save_dir, exist_ok=True)
     # List all files in the dataset repo
-    all_files = list_repo_files("Summer-193/t3_data_npz", repo_type="dataset")
+    all_files = list_repo_files("Summer-193/t3_data_V2", repo_type="dataset")
     npz_files = [f for f in all_files if f.endswith(".npz")]
-    print(f"Found {len(npz_files)} npz files tekken_dataset_npz/P1_WIN")
+    print(f"Found {len(npz_files)} npz files tekken_dataset_npz/P2_WIN")
     if not npz_files:
         print("No .npz files found. Exiting.")
         return
@@ -23,7 +27,7 @@ def download_t3_data_v2(save_dir="./t3_data"):
         try:
             print(f"Downloading {npz_file}...")
             file_path = hf_hub_download(
-                repo_id="Summer-193/t3_data_npz",
+                repo_id="Summer-193/t3_data_V2",
                 filename=npz_file,
                 cache_dir=save_dir,
                 repo_type="dataset"
@@ -41,5 +45,5 @@ def download_t3_data_v2(save_dir="./t3_data"):
             future.result()
 
 if __name__ == "__main__":
-    save_dir = "./t3_data"
+    save_dir = "./t3_data_v2"
     download_t3_data_v2(save_dir)

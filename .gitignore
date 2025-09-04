@@ -22,3 +22,5 @@ my_data/
 t3_pose/
 t3_data/
 .env
+checkpoints/
+pycache/

@@ -16,10 +16,11 @@ from ..muon import init_muon
 from ..nn.lpips import get_lpips_cls
 from ..schedulers import get_scheduler_cls
 from ..utils import Timer, freeze, unfreeze
-from ..utils.logging import LogHelper, to_wandb, to_wandb_depth, to_wandb_flow
+from ..utils.logging import LogHelper, to_wandb, to_wandb_depth, to_wandb_flow, to_wandb_latent_heatmaps #added heatmaps 
 from .base import BaseTrainer
 from ..losses.basic import latent_reg_loss
 from ..losses.dwt import dwt_loss_fn
+
 
 from ..nn.crt import CRT
 from tqdm import tqdm
@@ -268,7 +269,11 @@ class RecTrainer(BaseTrainer):
                                 batch_rec.detach().contiguous().bfloat16(),
                                 gather = False
                             )
-                            
+
+                            # We use `mu` which is the mean of the latent distribution
+                            if mu is not None:
+                                # Use .update() to merge the heatmap dictionary
+                                wandb_dict.update(to_wandb_latent_heatmaps(mu))
                             # Log depth maps if present (4 or 7 channels)
                             if batch.shape[1] >= 4:
                                 depth_samples = to_wandb_depth(

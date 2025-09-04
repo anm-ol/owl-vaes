@@ -54,7 +54,17 @@ class DistillDecTrainer(BaseTrainer):
         model = get_model_cls(model_id)(self.model_cfg)
         del model.encoder
         self.model = model.decoder
-
+         # <<< ADD THIS DEBUGGING BLOCK >>>
+        if self.rank == 0:
+            print("\n--- ARCHITECTURE MISMATCH DEBUG ---")
+            print("                     | TEACHER (from teacher_cfg) | STUDENT (from current config)")
+            print(f"model_id             | {teacher_cfg.model_id:<26} | {self.model_cfg.model_id}")
+            print(f"latent_channels      | {teacher_cfg.latent_channels:<26} | {self.model_cfg.latent_channels}")
+            print(f"ch_0                 | {teacher_cfg.ch_0:<26} | {self.model_cfg.ch_0}")
+            print(f"ch_max               | {teacher_cfg.ch_max:<26} | {self.model_cfg.ch_max}")
+            print(f"decoder_blocks_per_stage | {str(teacher_cfg.decoder_blocks_per_stage):<26} | {str(self.model_cfg.decoder_blocks_per_stage)}")
+            print("-------------------------------------\n")
+        # <<< END DEBUGGING BLOCK >>>
         # Only create discriminator if GAN or feature matching is used
         gan_weight = self.train_cfg.loss_weights.get('gan', 0.1)
         feature_matching_weight = self.train_cfg.loss_weights.get('feature_matching', 5.0)
@@ -119,7 +129,7 @@ class DistillDecTrainer(BaseTrainer):
         feature_matching_weight = self.train_cfg.loss_weights.get('feature_matching', 0.0)
         dwt_weight = self.train_cfg.loss_weights.get('dwt', 0.0)
         l1_weight = self.train_cfg.loss_weights.get('l1', 0.0)
-        l2_weight = self.train_cfg.loss_weights.get('l2', 0.0)
+        l2_weight = self.train_cfg.loss_weights.get('l2', 1.0)
 
         # Prepare model, lpips, ema
         self.model = self.model.to(self.device).train()
@@ -140,7 +150,8 @@ class DistillDecTrainer(BaseTrainer):
 
         self.encoder = self.encoder.to(self.device).bfloat16().eval()
         freeze(self.encoder)
-        self.encoder = torch.compile(self.encoder, mode='max-autotune',dynamic=False,fullgraph=True)
+        if self.train_cfg.use_torch_compile:
+            self.encoder = torch.compile(self.encoder, mode='max-autotune',dynamic=False,fullgraph=True)
         self.teacher_decoder = self.teacher_decoder.to(self.device).bfloat16().eval()
         freeze(self.teacher_decoder)
 
@@ -256,13 +267,22 @@ class DistillDecTrainer(BaseTrainer):
                 total_loss = 0.
                 batch = batch.to(self.device).bfloat16()
 
+
+                # --- DEBUG: Print tensor shapes once per epoch ---
+                if local_step == 0 and self.rank == 0:
+                    print(f"\n--- Data Shapes (Epoch {epoch_idx}) ---")
+                    print(f"Input Batch Shape: {batch.shape}")
+                    print(f"--------------------------\n")
+
+                    
                 with ctx:
                     with torch.no_grad():
                         teacher_z = self.encoder(batch) / self.train_cfg.latent_scale
                         teacher_z = teacher_z + torch.randn_like(teacher_z) * 0.01
-                        batch = batch[:,:3]
+                       # batch = batch[:,:3]
 
                     batch_rec = self.model(teacher_z)
+                    print(batch_rec.shape, batch.shape)
 
                     # Discriminator training - RGB only
                     if self.discriminator is not None:

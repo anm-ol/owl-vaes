@@ -8,7 +8,7 @@ import os
 import random
 
 class T3Dataset(IterableDataset):
-    def __init__(self, root = "t3_data/tekken_dataset_npz"):
+    def __init__(self, root = "t3_data/"):
         super().__init__()
 
         self.frames = []
@@ -25,7 +25,7 @@ class T3Dataset(IterableDataset):
                 
                 # Load .npz file
                 data = np.load(npz_path)
-                mask = data['attention_mask']
+                mask = data['valid_frames']
                 idx = int(np.where(mask == 1)[0][-1])
                 images = data['images'][:idx]
                 

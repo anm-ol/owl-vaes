@@ -48,7 +48,11 @@ train:
 
   checkpoint_dir: checkpoints/tekken_vae_H200_v6
 <<<<<<< HEAD
+<<<<<<< HEAD
   resume_ckpt: checkpoints/tekken_vae_H200_v6/step_30000.pt #null
+=======
+  resume_ckpt: checkpoints/tekken_vae_H200_v6/step_10000.pt #null
+>>>>>>> 0cd2721873ce40926f16cce6e1cc5f50b0bfefa2
 =======
   resume_ckpt: checkpoints/tekken_vae_H200_v6/step_10000.pt #null
 >>>>>>> 0cd2721873ce40926f16cce6e1cc5f50b0bfefa2

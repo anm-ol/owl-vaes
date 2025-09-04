@@ -270,7 +270,7 @@ class DistillDecTrainer(BaseTrainer):
 
                 # --- DEBUG: Print tensor shapes once per epoch ---
                 if local_step == 0 and self.rank == 0:
-                    print(f"\n--- Data Shapes (Epoch {epoch_idx}) ---")
+                    print(f"\n--- Data Shapes ---")
                     print(f"Input Batch Shape: {batch.shape}")
                     print(f"--------------------------\n")
 

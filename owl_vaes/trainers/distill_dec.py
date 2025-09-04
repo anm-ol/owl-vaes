@@ -375,12 +375,24 @@ class DistillDecTrainer(BaseTrainer):
                                 ema_rec = self.ema.ema_model(teacher_z)
                                 teacher_rec = self.teacher_decoder(teacher_z)[:,:3]
 
+                            #wandb_dict['samples'] = to_wandb(
+                               # teacher_rec.detach().contiguous().bfloat16(),
+                               # ema_rec.detach().contiguous().bfloat16(),
+                               # gather = False
+                            #)
                             wandb_dict['samples'] = to_wandb(
-                                teacher_rec.detach().contiguous().bfloat16(),
-                                ema_rec.detach().contiguous().bfloat16(),
-                                gather = False
+                                teacher_rec[:, :3].detach(), # Slice to RGB
+                                ema_rec[:, :3].detach(),     # Slice to RGB
+                                gather=False
                             )
 
+                             # Log the 1-channel POSE part separately
+                           # We'll use to_wandb_depth, which visualizes a single channel as grayscale
+                            wandb_dict['pose_samples'] = to_wandb_depth(
+                                teacher_rec.detach(), # Pass the full 4-channel tensor
+                                ema_rec.detach(),     # Pass the full 4-channel tensor
+                                gather=False
+                             )
                             # Log depth maps if present (4 or 7 channels)
                             if batch.shape[1] >= 4:
                                 depth_samples = to_wandb_depth(

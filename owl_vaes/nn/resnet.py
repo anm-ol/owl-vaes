@@ -26,7 +26,7 @@ class ResBlock(nn.Module):
 
         grp_size = 16
         n_grps = (2*ch) // grp_size
-
+    
         self.conv1 = weight_norm(nn.Conv2d(ch, 2*ch, 1, 1, 0))
         #self.norm1 = RMSNorm2d(2*ch)
         #self.norm1 = GroupNorm(2*ch, n_grps)
@@ -55,6 +55,7 @@ class ResBlock(nn.Module):
 
     def forward(self, x):
         def _inner(x):
+           
             x = self.conv1(x)
             #x = self.norm1(x)
             x = self.act1(x)
@@ -68,7 +69,7 @@ class ResBlock(nn.Module):
             x = checkpoint(_inner, x) + x.clone()
         else:
             x = _inner(x) + x.clone()
-
+        print(f"ResBlock input shape: {x.shape}, conv1 weight shape: {self.conv1.weight.shape}")
         return x
 
 class Upsample(nn.Module):

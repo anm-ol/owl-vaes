@@ -24,8 +24,8 @@ train:
     #bucket_name: cod-raw-360p
     #prefix: depth-and-raw
 
-  use_torch_compile: false
-  target_batch_size: 128
+  use_torch_compile: true #set false , gives error with the print statements inside training loop
+  target_batch_size: 128 # Effective global batch size (32 * 8 GPUs)
   batch_size: 16
 
   epochs: 200
@@ -49,10 +49,10 @@ train:
     warmup_steps: 1500
     min_lr: 1.5e-5
 
-  checkpoint_dir: checkpoints/t3_distill_dec_v1
+  checkpoint_dir: checkpoints/t3_distill_dec_v2
   resume_ckpt: null
 
-  sample_interval: 20
+  sample_interval: 250
   save_interval: 2000
 
   teacher_cfg: configs/t3/tekken_H200_optimized.yml
@@ -62,5 +62,5 @@ train:
 
 wandb:
   name: ${env:praymesh}
-  project: t3VAE
-  run_name: t3_distill_dec_v1
+  project: t3VAE_distill
+  run_name: t3_distill_dec_v2

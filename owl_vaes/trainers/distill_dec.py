@@ -54,8 +54,10 @@ class DistillDecTrainer(BaseTrainer):
         model = get_model_cls(model_id)(self.model_cfg)
         del model.encoder
         self.model = model.decoder
-         # <<< ADD THIS DEBUGGING BLOCK >>>
-        if self.rank == 0:
+
+
+        # <<< ADD THIS DEBUGGING BLOCK (turn torch.compile= false) >>>
+        """ if self.rank == 0:
             print("\n--- ARCHITECTURE MISMATCH DEBUG ---")
             print("                     | TEACHER (from teacher_cfg) | STUDENT (from current config)")
             print(f"model_id             | {teacher_cfg.model_id:<26} | {self.model_cfg.model_id}")
@@ -63,8 +65,9 @@ class DistillDecTrainer(BaseTrainer):
             print(f"ch_0                 | {teacher_cfg.ch_0:<26} | {self.model_cfg.ch_0}")
             print(f"ch_max               | {teacher_cfg.ch_max:<26} | {self.model_cfg.ch_max}")
             print(f"decoder_blocks_per_stage | {str(teacher_cfg.decoder_blocks_per_stage):<26} | {str(self.model_cfg.decoder_blocks_per_stage)}")
-            print("-------------------------------------\n")
+            print("-------------------------------------\n")"""
         # <<< END DEBUGGING BLOCK >>>
+
         # Only create discriminator if GAN or feature matching is used
         gan_weight = self.train_cfg.loss_weights.get('gan', 0.1)
         feature_matching_weight = self.train_cfg.loss_weights.get('feature_matching', 5.0)
@@ -276,13 +279,14 @@ class DistillDecTrainer(BaseTrainer):
 
                     
                 with ctx:
+
                     with torch.no_grad():
                         teacher_z = self.encoder(batch) / self.train_cfg.latent_scale
                         teacher_z = teacher_z + torch.randn_like(teacher_z) * 0.01
                        # batch = batch[:,:3]
 
                     batch_rec = self.model(teacher_z)
-                    print(batch_rec.shape, batch.shape)
+                    #print(batch_rec.shape, batch.shape)
 
                     # Discriminator training - RGB only
                     if self.discriminator is not None:
@@ -388,11 +392,9 @@ class DistillDecTrainer(BaseTrainer):
 
                              # Log the 1-channel POSE part separately
                            # We'll use to_wandb_depth, which visualizes a single channel as grayscale
-                            wandb_dict['pose_samples'] = to_wandb_depth(
-                                teacher_rec.detach(), # Pass the full 4-channel tensor
-                                ema_rec.detach(),     # Pass the full 4-channel tensor
-                                gather=False
-                             )
+                            pose_imgs = to_wandb_depth(teacher_rec.detach(), ema_rec.detach(), gather=False)
+                            if pose_imgs:
+                                wandb_dict['pose_samples'] = pose_imgs
                             # Log depth maps if present (4 or 7 channels)
                             if batch.shape[1] >= 4:
                                 depth_samples = to_wandb_depth(

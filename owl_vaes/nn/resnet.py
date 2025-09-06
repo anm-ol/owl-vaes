@@ -69,7 +69,7 @@ class ResBlock(nn.Module):
             x = checkpoint(_inner, x) + x.clone()
         else:
             x = _inner(x) + x.clone()
-        print(f"ResBlock input shape: {x.shape}, conv1 weight shape: {self.conv1.weight.shape}")
+        #print(f"ResBlock input shape: {x.shape}, conv1 weight shape: {self.conv1.weight.shape}")
         return x
 
 class Upsample(nn.Module):
